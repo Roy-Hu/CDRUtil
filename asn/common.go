@@ -5,11 +5,47 @@ import (
 	"strings"
 )
 
+// ASN.1 universal tag number
+const (
+	TagBoolean         = 1
+	TagInteger         = 2
+	TagBitString       = 3
+	TagOctetString     = 4
+	TagNull            = 5
+	TagOID             = 6
+	TagEnumerated      = 10
+	TagUTF8String      = 12
+	TagSequence        = 16
+	TagSet             = 17
+	TagNumericString   = 18
+	TagPrintableString = 19
+	TagT61String       = 20
+	TagIA5String       = 22
+	TagUTCTime         = 23
+	TagGeneralizedTime = 24
+	TagGraphicString   = 25
+	TagGeneralString   = 27
+	TagBMPString       = 30
+)
+
+// ASN.1 tag class
+const (
+	ClassUniversal       = 0
+	ClassApplication     = 1
+	ClassContextSpecific = 2
+	ClassPrivate         = 3
+)
+
+type tagAndLen struct {
+	class       int
+	constructed bool
+	tagNumber   uint64
+	len         int
+}
+
 // fieldParameters is the parsed representation of tag string from a structure field.
 type fieldParameters struct {
 	optional            bool    // true iff the type has OPTIONAL tag.
-	sizeExtensible      bool    // true iff the size can be extensed.
-	valueExtensible     bool    // true iff the value can be extensed.
 	sizeLowerBound      *int64  // a sizeLowerBound is the minimum size of type constraint(maybe nil).
 	sizeUpperBound      *int64  // a sizeUpperBound is the maximum size of type constraint(maybe nil).
 	valueLowerBound     *int64  // a valueLowerBound is the minimum value of type constraint(maybe nil).
@@ -19,9 +55,11 @@ type fieldParameters struct {
 	referenceFieldName  string  // the field to get to get the corresrponding value of this type(maybe nil).
 	referenceFieldValue *int64  // the field value which map to this type(maybe nil).
 	tagNumber           *uint64 // the field is for ber struct type
-	explicitTag         bool
-	structType          string
-	stringType          string
+	explicitTag         bool    // true iff the tag need to explicit encoded
+	set                 bool    // true iff ASN.1 type is set
+	choice              bool    // true iff ASN.1 type is choice
+	stringType          int
+	null                bool // true iff ASN.1 type is null
 }
 
 // Given a tag string with the format specified in the package comment,
@@ -32,10 +70,6 @@ func parseFieldParameters(str string) (params fieldParameters) {
 		switch {
 		case part == "optional":
 			params.optional = true
-		case part == "sizeExt":
-			params.sizeExtensible = true
-		case part == "valueExt":
-			params.valueExtensible = true
 		case strings.HasPrefix(part, "sizeLB:"):
 			i, err := strconv.ParseInt(part[7:], 10, 64)
 			if err == nil {
@@ -84,14 +118,18 @@ func parseFieldParameters(str string) (params fieldParameters) {
 			}
 		case part == "explicit":
 			params.explicitTag = true
-		case part == "utf8":
-			params.stringType = "Utf8String"
 		case part == "set":
-			params.structType = "Set"
-		case part == "seq":
-			params.structType = "Sequence"
+			params.set = true
 		case part == "choice":
-			params.structType = "Choice"
+			params.choice = true
+		case part == "utf8":
+			params.stringType = TagUTF8String
+		case part == "ia5":
+			params.stringType = TagIA5String
+		case part == "graphic":
+			params.stringType = TagGraphicString
+		case part == "null":
+			params.null = true
 		}
 	}
 	return params

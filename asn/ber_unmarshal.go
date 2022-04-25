@@ -1,4 +1,4 @@
-package cdr
+package asn
 
 import (
 	"fmt"
@@ -577,13 +577,12 @@ func (bd *berByteData) parseSequenceOf(sizeExtensed bool, params fieldParameters
 		berTrace(1, berByteLog(8, bd.byteOffset, bd.bitsOffset, numElements))
 	}
 	berTrace(2, fmt.Sprintf("Decoding  \"SEQUENCE OF\" struct %s with len(%d)", sliceType.Elem().Name(), numElements))
-	params.sizeExtensible = false
 	params.sizeUpperBound = nil
 	params.sizeLowerBound = nil
 	intNumElements := int(numElements)
 	sliceContent = reflect.MakeSlice(sliceType, intNumElements, intNumElements)
 	for i := 0; i < intNumElements; i++ {
-		err := berParseField(sliceContent.Index(i), bd, params)
+		err := ParseField(sliceContent.Index(i), bd, params)
 		if err != nil {
 			return sliceContent, err
 		}
@@ -660,15 +659,15 @@ func (bd *berByteData) parseOpenType(v reflect.Value, params fieldParameters) er
 		}
 	}
 	berTrace(2, fmt.Sprintf("Decoding OpenType %s with (len = %d byte)", v.Type().String(), len(bdOpenType.bytes)))
-	err := berParseField(v, bdOpenType, params)
+	err := ParseField(v, bdOpenType, params)
 	berTrace(2, fmt.Sprintf("Decoded OpenType %s", v.Type().String()))
 	return err
 }
 
-// berParseField is the main parsing function. Given a byte slice and an offset
+// ParseField is the main parsing function. Given a byte slice and an offset
 // into the array, it will try to parse a suitable ASN.1 value out and store it
 // in the given Value. TODO : ObjectIdenfier, handle extension Field
-func berParseField(v reflect.Value, bd *berByteData, params fieldParameters) error {
+func ParseField(v reflect.Value, bd *berByteData, params fieldParameters) error {
 	fieldType := v.Type()
 
 	// If we have run out of data return error.
@@ -678,26 +677,10 @@ func berParseField(v reflect.Value, bd *berByteData, params fieldParameters) err
 	if v.Kind() == reflect.Ptr {
 		ptr := reflect.New(fieldType.Elem())
 		v.Set(ptr)
-		return berParseField(v.Elem(), bd, params)
+		return ParseField(v.Elem(), bd, params)
 	}
 	sizeExtensible := false
 	valueExtensible := false
-	if params.sizeExtensible {
-		if bitsValue, err1 := bd.getBitsValue(1); err1 != nil {
-			return err1
-		} else if bitsValue != 0 {
-			sizeExtensible = true
-		}
-		berTrace(2, fmt.Sprintf("Decoded Size Extensive Bit : %t", sizeExtensible))
-	}
-	if params.valueExtensible && v.Kind() != reflect.Slice {
-		if bitsValue, err1 := bd.getBitsValue(1); err1 != nil {
-			return err1
-		} else if bitsValue != 0 {
-			valueExtensible = true
-		}
-		berTrace(2, fmt.Sprintf("Decoded Value Extensive Bit : %t", valueExtensible))
-	}
 
 	// We deal with the structures defined in this package first.
 	switch fieldType {
@@ -811,7 +794,7 @@ func berParseField(v reflect.Value, bd *berByteData, params fieldParameters) err
 				} else if present >= structType.NumField() {
 					return fmt.Errorf("CHOICE Present is bigger than number of struct field")
 				} else {
-					return berParseField(val.Field(present), bd, structParams[present])
+					return ParseField(val.Field(present), bd, structParams[present])
 				}
 			}
 		}
@@ -845,7 +828,7 @@ func berParseField(v reflect.Value, bd *berByteData, params fieldParameters) err
 					*structParams[i].referenceFieldValue = referenceFieldValue
 				}
 			}
-			if err := berParseField(val.Field(i), bd, structParams[i]); err != nil {
+			if err := ParseField(val.Field(i), bd, structParams[i]); err != nil {
 				return err
 			}
 		}
@@ -918,14 +901,14 @@ func berParseField(v reflect.Value, bd *berByteData, params fieldParameters) err
 //
 // Other ASN.1 types are not supported; if it encounters them,
 // Unmarshal returns a parse error.
-func BerUnmarshal(b []byte, value interface{}) error {
-	return BerUnmarshalWithParams(b, value, "")
+func Unmarshal(b []byte, value interface{}) error {
+	return UnmarshalWithParams(b, value, "")
 }
 
 // UnmarshalWithParams allows field parameters to be specified for the
 // top-level element. The form of the params is the same as the field tags.
-func BerUnmarshalWithParams(b []byte, value interface{}, params string) error {
+func UnmarshalWithParams(b []byte, value interface{}, params string) error {
 	v := reflect.ValueOf(value).Elem()
 	bd := &berByteData{b, 0, 0}
-	return berParseField(v, bd, parseFieldParameters(params))
+	return ParseField(v, bd, parseFieldParameters(params))
 }
