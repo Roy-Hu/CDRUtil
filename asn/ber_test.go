@@ -2,6 +2,7 @@ package asn
 
 import (
 	"encoding/hex"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -178,34 +179,41 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
+func newInt(i int) *int                         { return &i }
+func newString(s string) *string                { return &s }
+func newBool(b bool) *bool                      { return &b }
+func newEnum(i Enumerated) *Enumerated          { return &i }
+func newOctetString(o OctetString) *OctetString { return &o }
+
 func TestUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		name  string
-		in    interface{}
-		out   string
+		out   interface{}
+		in    string
 		param string
 	}{
-		{"intTest1", 10, "02010a", ""},
-		{"intTest2", 127, "02017f", ""},
-		{"intTest3", 128, "02020080", ""},
-		{"intTest4", -128, "020180", ""},
-		{"intTest5", -129, "0202ff7f", ""},
-		{"intTest6", 0, "020100", ""},
-		{"boolTest1", true, "0101ff", ""},
-		{"boolTest2", false, "010100", ""},
-		{"BitStringTest1", BitString{[]byte{0x80}, 1}, "03020780", ""},
-		{"BitStringTest2", BitString{[]byte{0x81, 0xf0}, 12}, "03030481f0", ""},
-		{"OctetStringTest1", OctetString([]byte{1, 2, 3}), "0403010203", ""},
-		{"StringTest1", "test", "0c0474657374", "utf8"},
+		{"intTest1", newInt(10), "02010a", ""},
+		{"intTest2", newInt(127), "02017f", ""},
+		{"intTest3", newInt(128), "02020080", ""},
+		{"intTest4", newInt(-128), "020180", ""},
+		{"intTest5", newInt(-129), "0202ff7f", ""},
+		{"intTest6", newInt(0), "020100", ""},
+		{"boolTest1", newBool(true), "0101ff", ""},
+		{"boolTest2", newBool(false), "010100", ""},
+		{"BitStringTest1", &BitString{[]byte{0x80}, 1}, "03020780", ""},
+		{"BitStringTest2", &BitString{[]byte{0x81, 0xf0}, 12}, "03030481f0", ""},
+		{"OctetStringTest1", newOctetString([]byte{1, 2, 3}), "0403010203", ""},
+		{"StringTest1", newString("test"), "0c0474657374", "utf8"},
 		{
 			"StringTest2",
-			"" +
-				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // This is 127 times 'x'
+			newString(
+				"" +
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"), // This is 127 times 'x'
 			"0c7f" +
 				"7878787878787878787878787878787878787878787878787878787878787878" +
 				"7878787878787878787878787878787878787878787878787878787878787878" +
@@ -215,11 +223,11 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"StringTest3",
-			"" +
+			newString("" +
 				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
 				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
 				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" +
-				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // This is 128 times 'x'
+				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"), // This is 128 times 'x'
 			"0c8180" +
 				"7878787878787878787878787878787878787878787878787878787878787878" +
 				"7878787878787878787878787878787878787878787878787878787878787878" +
@@ -227,23 +235,23 @@ func TestUnmarshal(t *testing.T) {
 				"7878787878787878787878787878787878787878787878787878787878787878",
 			"utf8",
 		},
-		{"enumTest1", Enumerated(127), "0a017f", ""},
-		{"enumTest2", Enumerated(128), "0a020080", ""},
+		{"enumTest1", newEnum(127), "0a017f", ""},
+		{"enumTest2", newEnum(128), "0a020080", ""},
 		{
 			"structTest1",
-			intStruct{64},
+			&intStruct{64},
 			"3003" + "800140",
 			"seq",
 		},
 		{
 			"structTest2",
-			twoIntStruct{64, 65},
+			&twoIntStruct{64, 65},
 			"3006" + "800140" + "810141",
 			"seq",
 		},
 		{
 			"structTest3",
-			nestedStruct{intStruct{64}, intStruct{65}},
+			&nestedStruct{intStruct{64}, intStruct{65}},
 			"300a" +
 				"a003" +
 				"800140" +
@@ -253,7 +261,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest1",
-			choiceTest{
+			&choiceTest{
 				1, &i, nil, nil, nil, nil,
 			},
 			"800100",
@@ -261,7 +269,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest2",
-			choiceTest{
+			&choiceTest{
 				2,
 				nil,
 				&BitString{[]byte{0x80}, 1},
@@ -274,7 +282,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest3",
-			choiceTest{
+			&choiceTest{
 				3,
 				nil,
 				nil,
@@ -287,7 +295,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest4",
-			choiceTest{
+			&choiceTest{
 				4, nil, nil, nil, &i, nil,
 			},
 			"9f200100",
@@ -295,7 +303,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest5",
-			choiceTest{
+			&choiceTest{
 				5, nil, nil, nil, nil, &i,
 			},
 			"9f81000100",
@@ -303,7 +311,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			"choiceTest6",
-			choiceInStruct{
+			&choiceInStruct{
 				1,
 				choiceTest{
 					1, &i, nil, nil, nil, nil,
@@ -316,9 +324,14 @@ func TestUnmarshal(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			out, err := BerMarshalWithParams(tc.in, tc.param)
+			in, err := hex.DecodeString(tc.in)
 			require.NoError(t, err)
-			require.Equal(t, tc.out, hex.EncodeToString(out))
+			out := reflect.New(reflect.TypeOf(tc.out).Elem())
+			val := out.Interface()
+			err = UnmarshalWithParams(in, val, tc.param)
+			require.NoError(t, err)
+			require.True(t, reflect.DeepEqual(tc.out, val))
+			require.Equal(t, tc.out, val)
 		})
 	}
 }

@@ -746,15 +746,6 @@ func ParseField(v reflect.Value, bd *berByteData, params fieldParameters) error 
 			structParams = append(structParams, tempParams)
 		}
 
-		if optionalCount > 0 {
-			if optionalPresentsTmp, err := bd.getBitsValue(optionalCount); err != nil {
-				return err
-			} else {
-				optionalPresents = optionalPresentsTmp
-			}
-			berTrace(2, fmt.Sprintf("optionalPresents is %0b", optionalPresents))
-		}
-
 		// CHOICE or OpenType
 		if structType.NumField() > 0 && structType.Field(0).Name == "Present" {
 			var present int = 0
