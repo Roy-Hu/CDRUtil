@@ -5,10 +5,7 @@ import (
 
 	"github.com/free5gc/CDRUtil/asn"
 	"github.com/free5gc/CDRUtil/cdrType"
-
-	//"github.com/free5gc/openapi/models"
-
-	"bitbucket.org/free5gc-team/openapi/models"
+	"github.com/free5gc/openapi/models"
 )
 
 func MultiUnitUsageToCdr(multiUnitUsageList []models.MultipleUnitUsage) []cdrType.MultipleUnitUsage {
