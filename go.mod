@@ -8,4 +8,4 @@ require (
 	github.com/stretchr/testify v1.7.1
 )
 
-replace github.com/free5gc/openapi => /home/free5gcninja/dev/nems/openapi
+replace github.com/free5gc/openapi => ../openapi
