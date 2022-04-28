@@ -39,7 +39,7 @@ func TestCdrFile(t *testing.T) {
 		hdr: cdrf,
 		cdrList: []CDR{{
 			hdr:CdrHeader {
-				CdrLength                  :8,
+				CdrLength                  :3,
 				ReleaseIdentifier          :Rel6, // octet 3 bit 6..8
 				VersionIdentifier          :3,                // otcet 3 bit 1..5
 				DataRecordFormat           :UnalignedPackedEncodingRules,  // octet 4 bit 6..8

@@ -356,7 +356,6 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 	}
 
 	for i, cdr := range cdfFile.cdrList {
-		preLength := len(buf.Bytes())
 		bufCdrHeader := cdr.hdr.Encoding()
 		if err := binary.Write(buf, binary.BigEndian, bufCdrHeader); err != nil {
 			fmt.Println("CDRFile failed:", err)
@@ -366,9 +365,9 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 			fmt.Println("CDRFile failed:", err)
 		}
 
-		if len(buf.Bytes())-preLength != int(cdr.hdr.CdrLength) {
+		if len(cdr.cdrByte) != int(cdr.hdr.CdrLength) {
 			fmt.Printf("[Encoding Warning]CdrLength field of cdr%#[1]d header not equals to the length of encoding cdr%#[1]d.", i)
-			fmt.Println("\tExpected", len(buf.Bytes())-preLength, "Get", int(cdr.hdr.CdrLength))
+			fmt.Println("\tExpected", len(cdr.cdrByte), "Get", int(cdr.hdr.CdrLength))
 		}
 	}
 
@@ -492,7 +491,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 	for i := 1; i <= int(numberOfCdrsInFile); i++ {
 		cdrLength := binary.BigEndian.Uint16(data[tail:tail+2])
 		if len(data) < int(tail)+5+int(cdrLength) {
-			fmt.Println("[Error]Length of cdrfile is wrong. cdr:",i)
+			fmt.Println("[Decoding Error]Length of cdrfile is wrong. cdr:",i)
 		}
 
 		cdrHeader := CdrHeader {
