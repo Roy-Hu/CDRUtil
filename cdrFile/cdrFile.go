@@ -343,13 +343,11 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 	buf := new(bytes.Buffer)
 
 	// Cdr File Header
-	fmt.Println("hdr")
 	bufCdrFileHeader := cdfFile.hdr.Encoding()
 	if err := binary.Write(buf, binary.BigEndian, bufCdrFileHeader); err != nil {
 		fmt.Println("CDRFile failed:", err)
 	}
 
-	fmt.Println("cdr list")
 	for _, cdr := range cdfFile.cdrList {
 		bufCdrHeader := cdr.hdr.Encoding()
 		if err := binary.Write(buf, binary.BigEndian, bufCdrHeader); err != nil {
@@ -361,7 +359,7 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 		}
 	}
 
-	fmt.Printf("Encoded: %b\n", buf.Bytes())
+	// fmt.Printf("Encoded: %b\n", buf.Bytes())
 	err := ioutil.WriteFile(fileName, buf.Bytes(), 0666) 
 	if err != nil {
 		panic(err)
@@ -468,13 +466,13 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 		LowReleaseIdentifierExtension:  	   data[n+1],
 	}
 
-    fmt.Println("[Decode]cdrfileheader:\n", cdfFile.hdr)
+    // fmt.Println("[Decode]cdrfileheader:\n", cdfFile.hdr)
 
 	tail := n+2
 
 	for i := 1; i <= int(numberOfCdrsInFile); i++ {
 		cdrLength := binary.BigEndian.Uint16(data[tail:tail+2])
-		if len(data) >= int(tail)+5+int(cdrLength) {
+		if len(data) < int(tail)+5+int(cdrLength) {
 			fmt.Println("[Error]Length of cdrfile is wrong. cdr:",i)
 		}
 
@@ -494,7 +492,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 		cdfFile.cdrList = append(cdfFile.cdrList, cdr)
 		tail += 5 + cdrLength
 	}
-	fmt.Println("[Decode]cdrfile:\n", cdfFile)
+	// fmt.Println("[Decode]cdrfile:\n", cdfFile)
 	// fmt.Printf("%#v\n", cdfFile)
 }
 

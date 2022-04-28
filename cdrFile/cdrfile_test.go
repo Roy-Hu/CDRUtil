@@ -1,7 +1,7 @@
 package util
 
 import (
-	"fmt"
+	// "fmt"
 	// "reflect"
 	"testing"
 	"strconv"
@@ -65,9 +65,6 @@ func TestCdrFile(t *testing.T) {
 			tc.in.Encoding(fileName)
 			newCdrFile := CDRFile{}
 			newCdrFile.Decoding(fileName)
-
-			fmt.Println("tc.in", tc.in)
-			fmt.Println("newCdrFile", newCdrFile)
 
 			require.Equal(t, tc.in, newCdrFile)
 			// require.True(t, reflect.DeepEqual(tc.in, newCdrFile))
