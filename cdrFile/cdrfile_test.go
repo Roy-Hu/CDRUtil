@@ -4,6 +4,7 @@ import (
 	"fmt"
 	// "reflect"
 	"testing"
+	"strconv"
 
 	"github.com/stretchr/testify/require"
 )
@@ -11,8 +12,8 @@ import (
 func TestCdrFile(t *testing.T) {
 	t.Parallel()
 
-	fileOpeningTS := TimeStamp{4, 28, 17, 18, 1, 8, 0}
-	timestampWhenLastCdrWasAppendedToFIle := TimeStamp{1, 2, 3, 4, 1, 6, 30}
+	fileOpeningTS := CdrHdrTimeStamp{4, 28, 17, 18, 1, 8, 0}
+	timestampWhenLastCdrWasAppendedToFIle := CdrHdrTimeStamp{1, 2, 3, 4, 1, 6, 30}
 
 	// timeNow := time.Now()
 	cdrf := CdrFileHeader{
@@ -46,7 +47,7 @@ func TestCdrFile(t *testing.T) {
 		ReleaseIdentifierExtension :4,
 	}
 
-	cdrFile := CDRFile{
+	cdrFile1 := CDRFile{
 		hdr: cdrf,
 		cdrList: []CDR{{hdr:cdrHeader, cdrByte:[]byte("abc")},},
 	}
@@ -55,14 +56,15 @@ func TestCdrFile(t *testing.T) {
 		name  string
 		in    CDRFile
 	}{
-		{"cdrfile1", cdrFile},
+		{"cdrfile1", cdrFile1},
 	}
 
-	for _, tc := range testCases {
+	for i, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.in.Encoding("encoding.txt")
+			fileName := "encoding"+strconv.Itoa(i)+".txt"
+			tc.in.Encoding(fileName)
 			newCdrFile := CDRFile{}
-			newCdrFile.Decoding("encoding.txt")
+			newCdrFile.Decoding(fileName)
 
 			fmt.Println("tc.in", tc.in)
 			fmt.Println("newCdrFile", newCdrFile)

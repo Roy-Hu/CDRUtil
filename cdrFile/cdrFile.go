@@ -27,8 +27,8 @@ type CdrFileHeader struct {
 	HighVersionIdentifier                 uint8 // octet 9 bit 1..5
 	LowReleaseIdentifier                  uint8 // octet 10 bit 6..8
 	LowVersionIdentifier                  uint8 // octet 10 bit 1..5
-	FileOpeningTimestamp                  TimeStamp
-	TimestampWhenLastCdrWasAppendedToFIle TimeStamp
+	FileOpeningTimestamp                  CdrHdrTimeStamp
+	TimestampWhenLastCdrWasAppendedToFIle CdrHdrTimeStamp
 	NumberOfCdrsInFile                    uint32
 	FileSequenceNumber                    uint32
 	FileClosureTriggerReason              FileClosureTriggerReasonType
@@ -51,7 +51,7 @@ type CdrHeader struct {
 	ReleaseIdentifierExtension uint8
 }
 
-type TimeStamp struct {
+type CdrHdrTimeStamp struct {
 	MonthLocal  							uint8
 	DateLocal   							uint8
 	HourLocal   							uint8
@@ -395,7 +395,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 	// loc := time.FixedZone("", offset)
 	// // The year is temporarily set to the current year
 	// fileOpeningTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
-	fileOpeningTimestamp := TimeStamp{
+	fileOpeningTimestamp := CdrHdrTimeStamp{
 		MonthLocal                            : uint8(ts >> 28),
 		DateLocal                             : uint8((ts >> 23) & 0b11111),
 		HourLocal                             : uint8((ts >> 18) & 0b11111),
@@ -425,7 +425,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 	// lastCDRAppendTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
     // fmt.Println(fileLength)
 
-	lastCDRAppendTimestamp := TimeStamp{
+	lastCDRAppendTimestamp := CdrHdrTimeStamp{
 		MonthLocal                            : uint8(ts >> 28),
 		DateLocal                             : uint8((ts >> 23) & 0b11111),
 		HourLocal                             : uint8((ts >> 18) & 0b11111),
