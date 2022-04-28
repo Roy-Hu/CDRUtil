@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"time"
-	"os"
+	// "os"
+	"io/ioutil"
 )
 
 type CDRFile struct {
@@ -19,6 +19,7 @@ type CDR struct {
 	cdrByte []byte
 }
 
+
 type CdrFileHeader struct {
 	FileLength                            uint32
 	HeaderLength                          uint32
@@ -26,8 +27,8 @@ type CdrFileHeader struct {
 	HighVersionIdentifier                 uint8 // octet 9 bit 1..5
 	LowReleaseIdentifier                  uint8 // octet 10 bit 6..8
 	LowVersionIdentifier                  uint8 // octet 10 bit 1..5
-	FileOpeningTimestamp                  *time.Time
-	TimestampWhenLastCdrWasAppendedToFIle *time.Time
+	FileOpeningTimestamp                  TimeStamp
+	TimestampWhenLastCdrWasAppendedToFIle TimeStamp
 	NumberOfCdrsInFile                    uint32
 	FileSequenceNumber                    uint32
 	FileClosureTriggerReason              FileClosureTriggerReasonType
@@ -48,6 +49,16 @@ type CdrHeader struct {
 	DataRecordFormat           DataRecordFormatType  // octet 4 bit 6..8
 	TsNumber                   TsNumberIdentifier    // octet 4 bit 1..5
 	ReleaseIdentifierExtension uint8
+}
+
+type TimeStamp struct {
+	MonthLocal  							uint8
+	DateLocal   							uint8
+	HourLocal   							uint8
+	MinuteLocal 							uint8
+	SignOfTheLocalTimeDifferentialFromUtc   uint8  // bit set to "1" expresses "+" or bit set to "0" expresses "-" time deviation)
+	HourDeviation 							uint8
+	MinuteDeviation 						uint8
 }
 
 type FileClosureTriggerReasonType uint8
@@ -170,48 +181,63 @@ func (cdrf CdrFileHeader) Encoding() []byte{
 	}
 
 	// File opening timestamp
-	_, offset := cdrf.FileOpeningTimestamp.Zone()
-	sign := 0
-	offsetHour := -offset/3600
-	offsetMin := -offset/60%60
+	// _, offset := cdrf.FileOpeningTimestamp.Zone()
+	// sign := 0
+	// offsetHour := -offset/3600
+	// offsetMin := -offset/60%60
 
-	if offset >= 0 {
-		sign = 1
-		offsetHour = offset/3600
-		offsetMin = offset/60%60
-	}
+	// if offset >= 0 {
+	// 	sign = 1
+	// 	offsetHour = offset/3600
+	// 	offsetMin = offset/60%60
+	// }
 
-	var ts uint32 = uint32(cdrf.FileOpeningTimestamp.Month())<<28 |
-		uint32(cdrf.FileOpeningTimestamp.Day())<<23 |
-		uint32(cdrf.FileOpeningTimestamp.Hour())<<18 |
-		uint32(cdrf.FileOpeningTimestamp.Minute())<<12 |
-		uint32(sign)<<11 |
-		uint32(offsetHour)<<6 |
-		uint32(offsetMin)
+	// var ts uint32 = uint32(cdrf.FileOpeningTimestamp.Month())<<28 |
+	// 	uint32(cdrf.FileOpeningTimestamp.Day())<<23 |
+	// 	uint32(cdrf.FileOpeningTimestamp.Hour())<<18 |
+	// 	uint32(cdrf.FileOpeningTimestamp.Minute())<<12 |
+	// 	uint32(sign)<<11 |
+	// 	uint32(offsetHour)<<6 |
+	// 	uint32(offsetMin)
+
+	var ts uint32 = uint32(cdrf.FileOpeningTimestamp.MonthLocal)<<28 |
+		uint32(cdrf.FileOpeningTimestamp.DateLocal)<<23 |
+		uint32(cdrf.FileOpeningTimestamp.HourLocal)<<18 |
+		uint32(cdrf.FileOpeningTimestamp.MinuteLocal)<<12 |
+		uint32(cdrf.FileOpeningTimestamp.SignOfTheLocalTimeDifferentialFromUtc)<<11 |
+		uint32(cdrf.FileOpeningTimestamp.HourDeviation)<<6 |
+		uint32(cdrf.FileOpeningTimestamp.MinuteDeviation)
 
 	if err := binary.Write(buf, binary.BigEndian, ts); err != nil {
 		fmt.Println("CdrFileHeader File opening timestamp failed:", err)
 	}
 
 	// Timestamp when last CDR was appended to file
-	_, offset = cdrf.TimestampWhenLastCdrWasAppendedToFIle.Zone()
-	sign = 0
-	offsetHour = -offset/3600
-	offsetMin = -offset/60%60
+	// _, offset = cdrf.TimestampWhenLastCdrWasAppendedToFIle.Zone()
+	// sign = 0
+	// offsetHour = -offset/3600
+	// offsetMin = -offset/60%60
 
-	if offset >= 0 {
-		sign = 1
-		offsetHour = offset/3600
-		offsetMin = offset/60%60
-	}
+	// if offset >= 0 {
+	// 	sign = 1
+	// 	offsetHour = offset/3600
+	// 	offsetMin = offset/60%60
+	// }
 
-	ts  = uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Month())<<28 |
-		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Day())<<23 |
-		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Hour())<<18 |
-		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Minute())<<12 |
-		uint32(sign)<<11 |
-		uint32(offsetHour)<<6 |
-		uint32(offsetMin)
+	// ts  = uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Month())<<28 |
+	// 	uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Day())<<23 |
+	// 	uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Hour())<<18 |
+	// 	uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.Minute())<<12 |
+	// 	uint32(sign)<<11 |
+	// 	uint32(offsetHour)<<6 |
+	// 	uint32(offsetMin)
+	ts = uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.MonthLocal)<<28 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.DateLocal)<<23 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.HourLocal)<<18 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.MinuteLocal)<<12 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.SignOfTheLocalTimeDifferentialFromUtc)<<11 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.HourDeviation)<<6 |
+		uint32(cdrf.TimestampWhenLastCdrWasAppendedToFIle.MinuteDeviation)
 
 	if err := binary.Write(buf, binary.BigEndian, ts); err != nil {
 		fmt.Println("CdrFileHeader failed:", err)
@@ -313,7 +339,7 @@ func (header CdrHeader) Encoding() []byte{
 	return buf.Bytes()
 }
 
-func (cdfFile CDRFile) Encoding() {
+func (cdfFile CDRFile) Encoding(fileName string) {
 	buf := new(bytes.Buffer)
 
 	// Cdr File Header
@@ -336,17 +362,14 @@ func (cdfFile CDRFile) Encoding() {
 	}
 
 	fmt.Printf("Encoded: %b\n", buf.Bytes())
-	f, err := os.OpenFile("encoding.txt", os.O_CREATE | os.O_WRONLY, 0600)
+	err := ioutil.WriteFile(fileName, buf.Bytes(), 0666) 
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
-
-	buf.WriteTo(f)
 }
 
-func (cdfFile CDRFile) Decoding(fileName string) {
-	data, err := os.ReadFile(fileName)
+func (cdfFile *CDRFile) Decoding(fileName string) {
+	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		panic(err)
 	}
@@ -355,43 +378,62 @@ func (cdfFile CDRFile) Decoding(fileName string) {
 
 	// File opening timestamp
 	ts := binary.BigEndian.Uint32(data[10:14])
-	month := ts >> 28
-	date := int((ts >> 23) & 0b11111)
-	hour := int((ts >> 18) & 0b11111)
-	minute := int((ts >> 12) & 0b111111)
-	sign := (ts >> 11) & 0b1
-	hourDeviation := (ts >> 6) & 0b11111
-	minuteDeviation := ts & 0b111111
+	// month := ts >> 28
+	// date := int((ts >> 23) & 0b11111)
+	// hour := int((ts >> 18) & 0b11111)
+	// minute := int((ts >> 12) & 0b111111)
+	// sign := (ts >> 11) & 0b1
+	// hourDeviation := (ts >> 6) & 0b11111
+	// minuteDeviation := ts & 0b111111
 
-	var offset int
-	if sign == 1 {
-		offset = int(hourDeviation*3600 + minuteDeviation*60)
-	} else if sign == 0 {
-		offset = int(hourDeviation*3600 + minuteDeviation*60) * -1
+	// var offset int
+	// if sign == 1 {
+	// 	offset = int(hourDeviation*3600 + minuteDeviation*60)
+	// } else if sign == 0 {
+	// 	offset = int(hourDeviation*3600 + minuteDeviation*60) * -1
+	// }
+	// loc := time.FixedZone("", offset)
+	// // The year is temporarily set to the current year
+	// fileOpeningTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
+	fileOpeningTimestamp := TimeStamp{
+		MonthLocal                            : uint8(ts >> 28),
+		DateLocal                             : uint8((ts >> 23) & 0b11111),
+		HourLocal                             : uint8((ts >> 18) & 0b11111),
+		MinuteLocal                           : uint8((ts >> 12) & 0b111111),
+		SignOfTheLocalTimeDifferentialFromUtc : uint8((ts >> 11) & 0b1),
+		HourDeviation                         : uint8((ts >> 6) & 0b11111),
+		MinuteDeviation						  :	uint8(ts & 0b111111),
 	}
-	loc := time.FixedZone("", offset)
-	// The year is temporarily set to the current year
-	fileOpeningTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
 
 	// Last CDR append timestamp
 	ts = binary.BigEndian.Uint32(data[14:18])
-	month = ts >> 28
-	date = int((ts >> 23) & 0b11111)
-	hour = int((ts >> 18) & 0b11111)
-	minute = int((ts >> 12) & 0b111111)
-	sign = (ts >> 11) & 0b1
-	hourDeviation = (ts >> 6) & 0b11111
-	minuteDeviation = ts & 0b111111
+	// month = ts >> 28
+	// date = int((ts >> 23) & 0b11111)
+	// hour = int((ts >> 18) & 0b11111)
+	// minute = int((ts >> 12) & 0b111111)
+	// sign = (ts >> 11) & 0b1
+	// hourDeviation = (ts >> 6) & 0b11111
+	// minuteDeviation = ts & 0b111111
 
-	if sign == 1 {
-		offset = int(hourDeviation*3600 + minuteDeviation*60)
-	} else if sign == 0 {
-		offset = int(hourDeviation*3600 + minuteDeviation*60) * -1
-	}
-	loc = time.FixedZone("", offset)
-	// The year is temporarily set to the current year
-	lastCDRAppendTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
+	// if sign == 1 {
+	// 	offset = int(hourDeviation*3600 + minuteDeviation*60)
+	// } else if sign == 0 {
+	// 	offset = int(hourDeviation*3600 + minuteDeviation*60) * -1
+	// }
+	// loc = time.FixedZone("", offset)
+	// // The year is temporarily set to the current year
+	// lastCDRAppendTimestamp := time.Date(time.Now().Year(), time.Month(month), date, hour, minute, 0, 0, loc)
     // fmt.Println(fileLength)
+
+	lastCDRAppendTimestamp := TimeStamp{
+		MonthLocal                            : uint8(ts >> 28),
+		DateLocal                             : uint8((ts >> 23) & 0b11111),
+		HourLocal                             : uint8((ts >> 18) & 0b11111),
+		MinuteLocal                           : uint8((ts >> 12) & 0b111111),
+		SignOfTheLocalTimeDifferentialFromUtc : uint8((ts >> 11) & 0b1),
+		HourDeviation                         : uint8((ts >> 6) & 0b11111),
+		MinuteDeviation						  :	uint8(ts & 0b111111),
+	}
 
 	// Length
 	numberOfCdrsInFile := binary.BigEndian.Uint32(data[18:22])
@@ -411,8 +453,8 @@ func (cdfFile CDRFile) Decoding(fileName string) {
 		HighVersionIdentifier:                 data[8] & 0b11111,
 		LowReleaseIdentifier:                  data[9] >> 5,
 		LowVersionIdentifier:                  data[9] & 0b11111,
-		FileOpeningTimestamp:                  &fileOpeningTimestamp,
-		TimestampWhenLastCdrWasAppendedToFIle: &lastCDRAppendTimestamp,
+		FileOpeningTimestamp:                  fileOpeningTimestamp,
+		TimestampWhenLastCdrWasAppendedToFIle: lastCDRAppendTimestamp,
 		NumberOfCdrsInFile:                    numberOfCdrsInFile,
 		FileSequenceNumber:                    binary.BigEndian.Uint32(data[22:26]),
 		FileClosureTriggerReason:              FileClosureTriggerReasonType(data[26]),
@@ -432,8 +474,8 @@ func (cdfFile CDRFile) Decoding(fileName string) {
 
 	for i := 1; i <= int(numberOfCdrsInFile); i++ {
 		cdrLength := binary.BigEndian.Uint16(data[tail:tail+2])
-		if len(data) != int(tail)+5+int(cdrLength) {
-			fmt.Println("[Error]Length of cdrfile is unaligned. cdr:",i)
+		if len(data) >= int(tail)+5+int(cdrLength) {
+			fmt.Println("[Error]Length of cdrfile is wrong. cdr:",i)
 		}
 
 		cdrHeader := CdrHeader {
