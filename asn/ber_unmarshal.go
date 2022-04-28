@@ -85,6 +85,7 @@ func parseBool(b byte) (bool, error) {
 // in the given Value. TODO : ObjectIdenfier
 func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 	fieldType := v.Type()
+	fmt.Println(fieldType)
 
 	// If we have run out of data return error.
 	if v.Kind() == reflect.Ptr {
