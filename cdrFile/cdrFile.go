@@ -304,6 +304,13 @@ func (cdrf CdrFileHeader) Encoding() []byte{
 	// fmt.Printf("%#v\n", offsetMin)
 	// fmt.Printf("%#v\n", cdrf.FileOpeningTimestamp)
 	// fmt.Printf("%#v", cdrf.FileOpeningTimestamp.UTC().Sub(*cdrf.FileOpeningTimestamp).Hours())
+
+	// Check
+	if cdrf.HeaderLength != uint32(len(buf.Bytes())) && cdrf.HeaderLength != 0xffffffff{
+		fmt.Println("[Encoding Warning]HeaderLength field of CdfFile Header not equals to the length of CdfFile Header.")
+		fmt.Println("\tExpected", uint32(len(buf.Bytes())), "Get", cdrf.HeaderLength)
+	}
+
 	return buf.Bytes()
 }
 
@@ -348,7 +355,8 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 		fmt.Println("CDRFile failed:", err)
 	}
 
-	for _, cdr := range cdfFile.cdrList {
+	for i, cdr := range cdfFile.cdrList {
+		preLength := len(buf.Bytes())
 		bufCdrHeader := cdr.hdr.Encoding()
 		if err := binary.Write(buf, binary.BigEndian, bufCdrHeader); err != nil {
 			fmt.Println("CDRFile failed:", err)
@@ -357,6 +365,17 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 		if err := binary.Write(buf, binary.BigEndian, cdr.cdrByte); err != nil {
 			fmt.Println("CDRFile failed:", err)
 		}
+
+		if len(buf.Bytes())-preLength != int(cdr.hdr.CdrLength) {
+			fmt.Printf("[Encoding Warning]CdrLength field of cdr%#[1]d header not equals to the length of encoding cdr%#[1]d.", i)
+			fmt.Println("\tExpected", len(buf.Bytes())-preLength, "Get", int(cdr.hdr.CdrLength))
+		}
+	}
+
+	// Check
+	if cdfFile.hdr.FileLength != uint32(len(buf.Bytes())) && cdfFile.hdr.FileLength != 0xffffffff{
+		fmt.Println("[Encoding Warning]FileLength field of CdfFile Header not equals to the length of encoding file.")
+		fmt.Println("\tExpected", uint32(len(buf.Bytes())), "Get", cdfFile.hdr.FileLength)
 	}
 
 	// fmt.Printf("Encoded: %b\n", buf.Bytes())

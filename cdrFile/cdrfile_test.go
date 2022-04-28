@@ -12,23 +12,20 @@ import (
 func TestCdrFile(t *testing.T) {
 	t.Parallel()
 
-	fileOpeningTS := CdrHdrTimeStamp{4, 28, 17, 18, 1, 8, 0}
-	timestampWhenLastCdrWasAppendedToFIle := CdrHdrTimeStamp{1, 2, 3, 4, 1, 6, 30}
-
 	// timeNow := time.Now()
 	cdrf := CdrFileHeader{
-		FileLength:                            5,
-		HeaderLength:                          6,
+		FileLength:                            71,
+		HeaderLength:                          63,
 		HighReleaseIdentifier:                 2,
 		HighVersionIdentifier:                 3,
 		LowReleaseIdentifier:                  4,
 		LowVersionIdentifier:                  5,
-		FileOpeningTimestamp:                  fileOpeningTS,
-		TimestampWhenLastCdrWasAppendedToFIle: timestampWhenLastCdrWasAppendedToFIle,
+		FileOpeningTimestamp:                  CdrHdrTimeStamp{4, 28, 17, 18, 1, 8, 0},
+		TimestampWhenLastCdrWasAppendedToFIle: CdrHdrTimeStamp{1, 2, 3, 4, 1, 6, 30},
 		NumberOfCdrsInFile:                    1,
 		FileSequenceNumber:                    11,
 		FileClosureTriggerReason:              4,
-		//IpAddressOfNodeThatGeneratedFile      [20]byte(),
+		IpAddressOfNodeThatGeneratedFile:      [20]byte{0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb, 0xa, 0xb},
 		LostCdrIndicator:          4,
 		LengthOfCdrRouteingFilter: 4,
 		CDRRouteingFilter:                     []byte("abcd"),
@@ -38,18 +35,19 @@ func TestCdrFile(t *testing.T) {
 		LowReleaseIdentifierExtension:  3,
 	}
 
-	cdrHeader := CdrHeader {
-		CdrLength                  :3,
-		ReleaseIdentifier          :Rel6, // octet 3 bit 6..8
-		VersionIdentifier          :3,                // otcet 3 bit 1..5
-		DataRecordFormat           :UnalignedPackedEncodingRules,  // octet 4 bit 6..8
-		TsNumber                   : TS32253,   // octet 4 bit 1..5
-		ReleaseIdentifierExtension :4,
-	}
-
 	cdrFile1 := CDRFile{
 		hdr: cdrf,
-		cdrList: []CDR{{hdr:cdrHeader, cdrByte:[]byte("abc")},},
+		cdrList: []CDR{{
+			hdr:CdrHeader {
+				CdrLength                  :8,
+				ReleaseIdentifier          :Rel6, // octet 3 bit 6..8
+				VersionIdentifier          :3,                // otcet 3 bit 1..5
+				DataRecordFormat           :UnalignedPackedEncodingRules,  // octet 4 bit 6..8
+				TsNumber                   : TS32253,   // octet 4 bit 1..5
+				ReleaseIdentifierExtension :4,
+			},
+			cdrByte:[]byte("abc"),
+		},},
 	}
 
 	testCases := []struct {
