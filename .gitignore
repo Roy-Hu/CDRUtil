@@ -22,3 +22,5 @@ cscope.*
 *.log
 *.pcap
 
+*.patch
+*.cdr

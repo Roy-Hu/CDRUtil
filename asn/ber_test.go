@@ -2,6 +2,7 @@ package asn
 
 import (
 	"encoding/hex"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -31,9 +32,16 @@ type choiceInStruct struct {
 	A int        `ber:"tagNum:0"`
 	B choiceTest `ber:"tagNum:1,choice"`
 }
+type intSlice struct {
+	List []int
+}
+type sliceInStruct struct {
+	A []int `ber:"tagNum:0,seq"`
+}
 
 var i int
 
+// TODO: slice test
 func TestMarshal(t *testing.T) {
 	t.Parallel()
 
@@ -166,6 +174,49 @@ func TestMarshal(t *testing.T) {
 				},
 			},
 			"3008" + "800101" + "a103" + "800100",
+			"seq",
+		},
+		{
+			"sliceTest1",
+			[]int{1, 2, 3},
+			"3009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest2",
+			[]intStruct{{1}, {2}, {3}},
+			"300f" + "3003800101" + "3003800102" + "3003800103",
+			"seq",
+		},
+		{
+			"sliceTest3",
+			intSlice{[]int{1, 2, 3}},
+			"3009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest4",
+			sliceInStruct{[]int{1, 2, 3}},
+			"300b" + "a009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest5",
+			[]int{},
+			"3000",
+			"seq",
+		},
+		{
+			"sliceTest6",
+			[]choiceTest{
+				{
+					1, &i, nil, nil, nil, nil,
+				},
+				{
+					3, nil, nil, &intStruct{64}, nil, nil,
+				},
+			},
+			"3008" + "800100" + "a203" + "800140",
 			"seq",
 		},
 	}
@@ -320,6 +371,49 @@ func TestUnmarshal(t *testing.T) {
 			"3008" + "800101" + "a103" + "800100",
 			"seq",
 		},
+		{
+			"sliceTest1",
+			&[]int{1, 2, 3},
+			"3009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest2",
+			&[]intStruct{{1}, {2}, {3}},
+			"300f" + "3003800101" + "3003800102" + "3003800103",
+			"seq",
+		},
+		{
+			"sliceTest3",
+			&intSlice{[]int{1, 2, 3}},
+			"3009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest4",
+			&sliceInStruct{[]int{1, 2, 3}},
+			"300b" + "a009" + "020101" + "020102" + "020103",
+			"seq",
+		},
+		{
+			"sliceTest5",
+			&[]int{},
+			"3000",
+			"seq",
+		},
+		{
+			"sliceTest6",
+			&[]choiceTest{
+				{
+					1, &i, nil, nil, nil, nil,
+				},
+				{
+					3, nil, nil, &intStruct{64}, nil, nil,
+				},
+			},
+			"3008" + "800100" + "a203" + "800140",
+			"seq",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -330,7 +424,13 @@ func TestUnmarshal(t *testing.T) {
 			val := out.Interface()
 			err = UnmarshalWithParams(in, val, tc.param)
 			require.NoError(t, err)
-			require.Equal(t, tc.out, val)
+			if !reflect.DeepEqual(tc.out, val) {
+				v1 := reflect.ValueOf(tc.out).Elem()
+				v2 := reflect.ValueOf(val).Elem()
+				fmt.Println(v1)
+				fmt.Println(v2)
+			}
+			require.True(t, reflect.DeepEqual(tc.out, val))
 		})
 	}
 }

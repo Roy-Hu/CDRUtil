@@ -277,12 +277,12 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 					tempParams := parseFieldParameters(structType.Field(i).Tag.Get("ber"))
 					if tempParams.optional {
 						if v.Field(i).IsNil() {
-							berTrace(3, fmt.Sprintf("Field \"%s\" in %s is OPTIONAL and not present", structType.Field(i).Name, structType))
+							//berTrace(3, fmt.Sprintf("Field \"%s\" in %s is OPTIONAL and not present", structType.Field(i).Name, structType))
 							s[i] = bytesEncoder(nil)
 							continue
-						} else {
+						} /*else {
 							berTrace(3, fmt.Sprintf("Field \"%s\" in %s is OPTIONAL and present", structType.Field(i).Name, structType))
-						}
+						}*/
 					}
 
 					if tempParams.openType {
@@ -309,8 +309,10 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 			}
 			s := make([]encoder, v.Len())
 			var err error
+			tempParams := params
+			tempParams.tagNumber = nil
 			for i := 0; i < v.Len(); i++ {
-				s[i], err = makeField(val.Index(i), params)
+				s[i], err = makeField(val.Index(i), tempParams)
 				if err != nil {
 					fmt.Errorf("iterate subtype error")
 				}
