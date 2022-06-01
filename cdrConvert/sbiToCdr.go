@@ -1,6 +1,8 @@
 package cdrConvert
 
 import (
+	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/free5gc/CDRUtil/asn"
@@ -89,4 +91,21 @@ func TimeStampToCdr(t *time.Time) cdrType.TimeStamp {
 	}
 
 	return cdrTimeStamp
+}
+
+func PlmnIdToCdr(modelsPlmnid models.PlmnId) cdrType.PLMNId {
+	var hexString string
+	mcc := strings.Split(modelsPlmnid.Mcc, "")
+	mnc := strings.Split(modelsPlmnid.Mnc, "")
+	if len(modelsPlmnid.Mnc) == 2 {
+		hexString = mcc[1] + mcc[0] + "f" + mcc[2] + mnc[1] + mnc[0]
+	} else {
+		hexString = mcc[1] + mcc[0] + mnc[0] + mcc[2] + mnc[2] + mnc[1]
+	}
+
+	var cdrPlmnId cdrType.PLMNId
+	if plmnId, err := hex.DecodeString(hexString); err == nil {
+		cdrPlmnId.Value = plmnId
+	}
+	return cdrPlmnId
 }
