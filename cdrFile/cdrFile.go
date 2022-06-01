@@ -1,5 +1,4 @@
-package util
-// package main
+package cdrFile
 
 import (
 	"bytes"
@@ -10,13 +9,13 @@ import (
 )
 
 type CDRFile struct {
-	hdr     CdrFileHeader
-	cdrList []CDR
+	Hdr     CdrFileHeader
+	CdrList []CDR
 }
 
 type CDR struct {
-	hdr     CdrHeader
-	cdrByte []byte
+	Hdr     CdrHeader
+	CdrByte []byte
 }
 
 
@@ -350,31 +349,31 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 	buf := new(bytes.Buffer)
 
 	// Cdr File Header
-	bufCdrFileHeader := cdfFile.hdr.Encoding()
+	bufCdrFileHeader := cdfFile.Hdr.Encoding()
 	if err := binary.Write(buf, binary.BigEndian, bufCdrFileHeader); err != nil {
 		fmt.Println("CDRFile failed:", err)
 	}
 
-	for i, cdr := range cdfFile.cdrList {
-		bufCdrHeader := cdr.hdr.Encoding()
+	for i, cdr := range cdfFile.CdrList {
+		bufCdrHeader := cdr.Hdr.Encoding()
 		if err := binary.Write(buf, binary.BigEndian, bufCdrHeader); err != nil {
 			fmt.Println("CDRFile failed:", err)
 		}
 
-		if err := binary.Write(buf, binary.BigEndian, cdr.cdrByte); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, cdr.CdrByte); err != nil {
 			fmt.Println("CDRFile failed:", err)
 		}
 
-		if len(cdr.cdrByte) != int(cdr.hdr.CdrLength) {
+		if len(cdr.CdrByte) != int(cdr.Hdr.CdrLength) {
 			fmt.Printf("[Encoding Warning]CdrLength field of cdr%#[1]d header not equals to the length of encoding cdr%#[1]d.", i)
-			fmt.Println("\tExpected", len(cdr.cdrByte), "Get", int(cdr.hdr.CdrLength))
+			fmt.Println("\tExpected", len(cdr.CdrByte), "Get", int(cdr.Hdr.CdrLength))
 		}
 	}
 
 	// Check
-	if cdfFile.hdr.FileLength != uint32(len(buf.Bytes())) && cdfFile.hdr.FileLength != 0xffffffff{
+	if cdfFile.Hdr.FileLength != uint32(len(buf.Bytes())) && cdfFile.Hdr.FileLength != 0xffffffff{
 		fmt.Println("[Encoding Warning]FileLength field of CdfFile Header not equals to the length of encoding file.")
-		fmt.Println("\tExpected", uint32(len(buf.Bytes())), "Get", cdfFile.hdr.FileLength)
+		fmt.Println("\tExpected", uint32(len(buf.Bytes())), "Get", cdfFile.Hdr.FileLength)
 	}
 
 	// fmt.Printf("Encoded: %b\n", buf.Bytes())
@@ -462,7 +461,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 	var IpAddressOfNodeThatGeneratedFile [20]byte
 	copy(IpAddressOfNodeThatGeneratedFile[:], data[27:47])
 
-	cdfFile.hdr = CdrFileHeader{
+	cdfFile.Hdr = CdrFileHeader{
 		FileLength:                            binary.BigEndian.Uint32(data[0:4]),
 		HeaderLength:                          binary.BigEndian.Uint32(data[4:8]),
 		HighReleaseIdentifier:                 data[8] >> 5,
@@ -484,7 +483,7 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 		LowReleaseIdentifierExtension:  	   data[n+1],
 	}
 
-    // fmt.Println("[Decode]cdrfileheader:\n", cdfFile.hdr)
+    // fmt.Println("[Decode]cdrfileheader:\n", cdfFile.Hdr)
 
 	tail := n+2
 
@@ -504,10 +503,10 @@ func (cdfFile *CDRFile) Decoding(fileName string) {
 		}
 		
 		cdr := CDR{
-			hdr: cdrHeader,
-			cdrByte: data[tail+5:tail+5+cdrLength],
+			Hdr: cdrHeader,
+			CdrByte: data[tail+5:tail+5+cdrLength],
 		}
-		cdfFile.cdrList = append(cdfFile.cdrList, cdr)
+		cdfFile.CdrList = append(cdfFile.CdrList, cdr)
 		tail += 5 + cdrLength
 	}
 	// fmt.Println("[Decode]cdrfile:\n", cdfFile)

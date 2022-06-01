@@ -1,4 +1,4 @@
-package util
+package cdrFile
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func TestCdrFile(t *testing.T) {
 	t.Parallel()
 
 	cdrFile1 := CDRFile{
-		hdr: CdrFileHeader{
+		Hdr: CdrFileHeader{
 			FileLength:                            71,
 			HeaderLength:                          63,
 			HighReleaseIdentifier:                 2,
@@ -35,8 +35,8 @@ func TestCdrFile(t *testing.T) {
 			HighReleaseIdentifierExtension: 2,
 			LowReleaseIdentifierExtension:  3,
 		},
-		cdrList: []CDR{{
-			hdr:CdrHeader {
+		CdrList: []CDR{{
+			Hdr:CdrHeader {
 				CdrLength                  :3,
 				ReleaseIdentifier          :Rel6, // octet 3 bit 6..8
 				VersionIdentifier          :3,                // otcet 3 bit 1..5
@@ -44,12 +44,12 @@ func TestCdrFile(t *testing.T) {
 				TsNumber                   : TS32253,   // octet 4 bit 1..5
 				ReleaseIdentifierExtension :4,
 			},
-			cdrByte:[]byte("abc"),
+			CdrByte:[]byte("abc"),
 		},},
 	}
 
 	cdrFile2 := CDRFile{
-		hdr: CdrFileHeader{
+		Hdr: CdrFileHeader{
 			FileLength:                            92,
 			HeaderLength:                          66,
 			HighReleaseIdentifier:                 4,
@@ -70,9 +70,9 @@ func TestCdrFile(t *testing.T) {
 			HighReleaseIdentifierExtension: 	   1,
 			LowReleaseIdentifierExtension:  	   2,
 		},
-		cdrList: []CDR{
+		CdrList: []CDR{
 			{
-				hdr:CdrHeader {
+				Hdr:CdrHeader {
 					CdrLength                  :3,
 					ReleaseIdentifier          :Rel6, 
 					VersionIdentifier          :3,            
@@ -80,10 +80,10 @@ func TestCdrFile(t *testing.T) {
 					TsNumber                   : TS32253,   
 					ReleaseIdentifierExtension :4,
 				},
-				cdrByte:[]byte("abc"),
+				CdrByte:[]byte("abc"),
 			},
 			{
-				hdr:CdrHeader {
+				Hdr:CdrHeader {
 					CdrLength                  :6,
 					ReleaseIdentifier          :Rel5,
 					VersionIdentifier          :2,               
@@ -91,10 +91,10 @@ func TestCdrFile(t *testing.T) {
 					TsNumber                   : TS32205,   
 					ReleaseIdentifierExtension :2,
 				},
-				cdrByte:[]byte("ghjklm"),
+				CdrByte:[]byte("ghjklm"),
 			},
 			{
-				hdr:CdrHeader {
+				Hdr:CdrHeader {
 					CdrLength                  :2,
 					ReleaseIdentifier          :Rel9,
 					VersionIdentifier          :3,               
@@ -102,7 +102,7 @@ func TestCdrFile(t *testing.T) {
 					TsNumber                   : TS32225,  
 					ReleaseIdentifierExtension :1,
 				},
-				cdrByte:[]byte("cv"),
+				CdrByte:[]byte("cv"),
 			},
 		},
 	}
