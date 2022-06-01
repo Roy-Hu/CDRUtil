@@ -424,12 +424,7 @@ func TestUnmarshal(t *testing.T) {
 			val := out.Interface()
 			err = UnmarshalWithParams(in, val, tc.param)
 			require.NoError(t, err)
-			if !reflect.DeepEqual(tc.out, val) {
-				v1 := reflect.ValueOf(tc.out).Elem()
-				v2 := reflect.ValueOf(val).Elem()
-				fmt.Println(v1)
-				fmt.Println(v2)
-			}
+			// require.Equal(t, tc.out, val)
 			require.True(t, reflect.DeepEqual(tc.out, val))
 		})
 	}
