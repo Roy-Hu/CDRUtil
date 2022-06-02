@@ -11,7 +11,7 @@ import (
 )
 
 func MultiUnitUsageToCdr(multiUnitUsageList []models.MultipleUnitUsage) []cdrType.MultipleUnitUsage {
-	cdrMultiUnitUsageList := make([]cdrType.MultipleUnitUsage, len(multiUnitUsageList))
+	cdrMultiUnitUsageList := make([]cdrType.MultipleUnitUsage, 0, len(multiUnitUsageList))
 
 	for _, multiUnitUsage := range multiUnitUsageList {
 		usedUnitContainer := UsedUnitContainerToCdr(multiUnitUsage.UsedUnitContainer)
@@ -35,7 +35,7 @@ func MultiUnitUsageToCdr(multiUnitUsageList []models.MultipleUnitUsage) []cdrTyp
 // TODO: Only convert Local Sequence Number, Uplink, Downlink, Total Volumn,
 //       Service Specific Units currently.
 func UsedUnitContainerToCdr(usedUnitContainerList []models.UsedUnitContainer) []cdrType.UsedUnitContainer {
-	cdrUsedUnitContainerList := make([]cdrType.UsedUnitContainer, len(usedUnitContainerList))
+	cdrUsedUnitContainerList := make([]cdrType.UsedUnitContainer, 0, len(usedUnitContainerList))
 
 	for _, usedUnitContainer := range usedUnitContainerList {
 		serviceSpecificUnits := int64(usedUnitContainer.ServiceSpecificUnits)
@@ -62,7 +62,7 @@ func UsedUnitContainerToCdr(usedUnitContainerList []models.UsedUnitContainer) []
 
 // TODO convert type Trigger
 func TriggersToCdr(triggers []models.Trigger) []cdrType.Trigger {
-	cdrTriggers := make([]cdrType.Trigger, len(triggers))
+	cdrTriggers := make([]cdrType.Trigger, 0, len(triggers))
 
 	return cdrTriggers
 }

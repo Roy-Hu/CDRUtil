@@ -2,7 +2,6 @@ package asn
 
 import (
 	"encoding/hex"
-	"fmt"
 	"reflect"
 	"testing"
 
