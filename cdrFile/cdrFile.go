@@ -365,7 +365,7 @@ func (cdfFile CDRFile) Encoding(fileName string) {
 		}
 
 		if len(cdr.CdrByte) != int(cdr.Hdr.CdrLength) {
-			fmt.Printf("[Encoding Warning]CdrLength field of cdr%#[1]d header not equals to the length of encoding cdr%#[1]d.", i)
+			fmt.Println("[Encoding Warning]CdrLength field of cdr", i, "header not equals to the length of encoding cdr", i)
 			fmt.Println("\tExpected", len(cdr.CdrByte), "Get", int(cdr.Hdr.CdrLength))
 		}
 	}

@@ -40,7 +40,7 @@ type tagAndLen struct {
 	class       int
 	constructed bool
 	tagNumber   uint64
-	len         int
+	len         int64
 }
 
 // fieldParameters is the parsed representation of tag string from a structure field.

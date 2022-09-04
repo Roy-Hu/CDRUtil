@@ -28,15 +28,16 @@ func parseTagAndLength(bytes []byte) (r tagAndLen, off int, e error) {
 	}
 
 	if off >= len(bytes) {
-		fmt.Println(bytes)
+		// fmt.Println(bytes)
 		e = fmt.Errorf("panic")
 		return
 	}
 	if bytes[off] <= 127 {
-		r.len = int(bytes[off])
+		r.len = int64(bytes[off])
 		off++
 	} else {
 		len := int(bytes[off] & 0x7f)
+		// fmt.Println("len", len)
 		if len > 3 {
 			e = fmt.Errorf("length is too large")
 		}
@@ -46,7 +47,9 @@ func parseTagAndLength(bytes []byte) (r tagAndLen, off int, e error) {
 		if e != nil {
 			return
 		}
-		r.len = int(val)
+		// fmt.Println("bytes[off : off+len]", bytes[off : off+len], "val", val)
+
+		r.len = int64(val)
 		off += len
 	}
 
@@ -68,10 +71,11 @@ func parseInt64(bytes []byte) (r int64, e error) {
 	for _, b := range bytes {
 		r <<= 8
 		r |= int64(b)
+		// fmt.Println("r", r, "int64(b)", int64(b))
 	}
 
-	r <<= 64 - len(bytes)*8
-	r >>= 64 - len(bytes)*8
+	// r <<= 64 - len(bytes)*8
+	// r >>= 64 - len(bytes)*8
 
 	return
 }
@@ -85,7 +89,7 @@ func parseBool(b byte) (bool, error) {
 // in the given Value. TODO : ObjectIdenfier
 func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 	fieldType := v.Type()
-	fmt.Println(fieldType)
+	// fmt.Println(fieldType)
 
 	// If we have run out of data return error.
 	if v.Kind() == reflect.Ptr {
@@ -98,7 +102,7 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 	if err != nil {
 		return err
 	}
-	if talOff+tal.len > len(bytes) {
+	if int64(talOff)+tal.len > int64(len(bytes)) {
 		return fmt.Errorf("type value out of range")
 	}
 
@@ -153,11 +157,11 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 
 		if structType.Field(0).Name == "Value" {
 			// Non struct type
-			fmt.Println("Non struct type")
+			// fmt.Println("Non struct type")
 			return ParseField(val.Field(0), bytes, params)
 		} else if structType.Field(0).Name == "List" {
 			// List Type: SEQUENCE/SET OF
-			fmt.Println("List type")
+			// fmt.Println("List type")
 			return ParseField(val.Field(0), bytes, params)
 		}
 
@@ -184,7 +188,7 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 					if err != nil {
 						return err
 					}
-					if talOff+tal.len > len(bytes) {
+					if int64(talOff)+tal.len > int64(len(bytes)) {
 						return fmt.Errorf("type value out of range")
 					}
 					offset += talOff
@@ -209,20 +213,23 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 			}
 		}
 
-		offset := talOff
-		totalLen := len(bytes)
+		offset := int64(talOff)
+		totalLen := int64(len(bytes))
 
 		if !params.set {
 			current := 0
-			next := 0
+			next := int64(0)
 			for ; offset < totalLen; offset = next {
 				tal, talOff, err := parseTagAndLength(bytes[offset:])
 				if err != nil {
 					return err
 				}
-				next = offset + talOff + tal.len
+				next = int64(offset) + int64(talOff) + tal.len
 				if next > totalLen {
 					return fmt.Errorf("type value out of range")
+				}
+				if offset >= next {
+					fmt.Println("bytes offset", offset, "next", next, "talOff", talOff, "tal.len", tal.len)
 				}
 
 				for ; current < structType.NumField(); current++ {
@@ -243,13 +250,13 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 				current++
 			}
 		} else {
-			next := 0
+			next := int64(0)
 			for ; offset < totalLen; offset = next {
 				tal, talOff, err := parseTagAndLength(bytes[offset:])
 				if err != nil {
 					return err
 				}
-				next = offset + talOff + tal.len
+				next = offset + int64(talOff) + tal.len
 				if next > totalLen {
 					return fmt.Errorf("type value out of range")
 				}
@@ -276,14 +283,14 @@ func ParseField(v reflect.Value, bytes []byte, params fieldParameters) error {
 	case reflect.Slice:
 		sliceType := fieldType
 		var valArray [][]byte
-		var next int
-		for offset := talOff; offset < len(bytes); offset = next {
+		var next int64
+		for offset := int64(talOff); offset < int64(len(bytes)); offset = next {
 			tal, talOff, err := parseTagAndLength(bytes[offset:])
 			if err != nil {
 				return err
 			}
-			next = offset + talOff + tal.len
-			if next > len(bytes) {
+			next = offset + int64(talOff) + tal.len
+			if next > int64(len(bytes)) {
 				return fmt.Errorf("type value out of range")
 			}
 			valArray = append(valArray, bytes[offset:next])

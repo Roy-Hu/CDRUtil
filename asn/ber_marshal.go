@@ -93,11 +93,13 @@ func (i int64Encoder) Len() int {
 
 func (i int64Encoder) Encode(dst []byte) {
 	n := i.Len()
-
+	// i2 := i
+	
 	for j := 0; j < n; j++ {
 		dst[n-1-j] = byte(i)
 		i >>= 8
 	}
+	// fmt.Println("marsh: i", i2, "n:", n, "dst", dst)
 }
 
 func appendTagAndLen(dst []byte, t tagAndLen) []byte {
@@ -232,11 +234,11 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 			structType := fieldType
 			if structType.Field(0).Name == "Value" {
 				// Non struct type
-				fmt.Println("Non struct type")
+				// fmt.Println("Non struct type")
 				return makeField(val.Field(0), params)
 			} else if structType.Field(0).Name == "List" {
 				// List Type: SEQUENCE/SET OF
-				fmt.Println("List type")
+				// fmt.Println("List type")
 				return makeField(val.Field(0), params)
 			} else if structType.Field(0).Name == "Present" {
 				// Open type or CHOICE type
@@ -251,7 +253,7 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 					return nil, fmt.Errorf("Open Type is not implemented")
 				} else {
 					// Chioce type
-					fmt.Println("Chioce type")
+					// fmt.Println("Chioce type")
 					if params.tagNumber == nil {
 						return makeField(val.Field(present), tempParams)
 					}
@@ -264,7 +266,7 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 				}
 			} else {
 				// Struct type: SEQUENCE, SET
-				fmt.Println("Struct type")
+				// fmt.Println("Struct type")
 				tag.class = ClassUniversal
 				tag.constructed = true
 				if params.set {
@@ -327,7 +329,7 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 			berType.value = stringEncoder(v.String())
 		}
 	}
-	tag.len = berType.value.Len()
+	tag.len = int64(berType.value.Len())
 
 	if params.tagNumber != nil {
 		if params.explicitTag {
@@ -335,7 +337,7 @@ func makeField(v reflect.Value, params fieldParameters) (encoder, error) {
 			t.tagAndLen = bytesEncoder(appendTagAndLen(make([]byte, 8)[:0], tag))
 			berType.value = &t
 			tag.constructed = true
-			tag.len = berType.value.Len()
+			tag.len = int64(berType.value.Len())
 		}
 		tag.class = ClassContextSpecific
 		tag.tagNumber = *params.tagNumber
